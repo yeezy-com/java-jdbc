@@ -24,12 +24,8 @@ public class JdbcTemplate {
     }
 
     public void update(String sql, Object ... params) {
-        Connection conn = null;
-        PreparedStatement pstmt = null;
-        try {
-            conn = dataSource.getConnection();
-            pstmt = conn.prepareStatement(sql);
-
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             log.debug("query : {}", sql);
 
             setParameters(pstmt, params);
@@ -37,28 +33,13 @@ public class JdbcTemplate {
         } catch (SQLException e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException(e);
-        } finally {
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            } catch (SQLException ignored) {}
-
-            try {
-                if (conn != null) {
-                    conn.close();
-                }
-            } catch (SQLException ignored) {}
         }
     }
 
     public List<Object> find(final String sql, final Class<?> resultClass) {
-        Connection conn = null;
-        PreparedStatement pstmt = null;
         ResultSet rs = null;
-        try {
-            conn = dataSource.getConnection();
-            pstmt = conn.prepareStatement(sql);
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             rs = pstmt.executeQuery();
 
             log.debug("query : {}", sql);
@@ -83,17 +64,18 @@ public class JdbcTemplate {
         } catch (InvocationTargetException | IllegalAccessException | InstantiationException e) {
             throw new RuntimeException(e);
         } finally {
-            closeAllResources(rs, pstmt, conn);
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+            } catch (SQLException ignored) {}
         }
     }
 
     public Object findOne(final String sql, final Class<?> resultClass, final Object ... params) {
-        Connection conn = null;
-        PreparedStatement pstmt = null;
         ResultSet rs = null;
-        try {
-            conn = dataSource.getConnection();
-            pstmt = conn.prepareStatement(sql);
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             setParameters(pstmt, params);
             rs = pstmt.executeQuery();
 
@@ -119,28 +101,12 @@ public class JdbcTemplate {
         } catch (InvocationTargetException | IllegalAccessException | InstantiationException e) {
             throw new RuntimeException(e);
         } finally {
-            closeAllResources(rs, pstmt, conn);
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+            } catch (SQLException ignored) {}
         }
-    }
-
-    private void closeAllResources(ResultSet rs, PreparedStatement pstmt, Connection conn) {
-        try {
-            if (rs != null) {
-                rs.close();
-            }
-        } catch (SQLException ignored) {}
-
-        try {
-            if (pstmt != null) {
-                pstmt.close();
-            }
-        } catch (SQLException ignored) {}
-
-        try {
-            if (conn != null) {
-                conn.close();
-            }
-        } catch (SQLException ignored) {}
     }
 
     private void setParameters(PreparedStatement pstmt, Object ... params) throws SQLException {
