@@ -160,15 +160,19 @@ public class JdbcTemplate {
 
             if (typeName.equals(String.class.getTypeName())) {
                 pstmt.setString(idx +1, (String) param);
+                return;
             }
             if (typeName.equals(Integer.class.getTypeName()) || typeName.equals(int.class.getTypeName())) {
                 pstmt.setInt(idx +1, (int) param);
+                return;
             }
             if (typeName.equals(Double.class.getTypeName()) || typeName.equals(double.class.getTypeName())) {
                 pstmt.setDouble(idx +1, (double) param);
+                return;
             }
             if (typeName.equals(Long.class.getTypeName()) || typeName.equals(long.class.getTypeName())) {
                 pstmt.setLong(idx +1, (long) param);
+                return;
             }
 
             pstmt.setObject(idx + 1, param);
