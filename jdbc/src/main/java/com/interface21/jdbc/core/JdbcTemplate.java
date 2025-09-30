@@ -117,7 +117,9 @@ public class JdbcTemplate {
 
             if (rs.next()) {
                 Constructor<?> constructor = findConstructor(resultClass, rs);
-                assert constructor != null;
+                if (constructor == null) {
+                    throw new RuntimeException();
+                }
 
                 Object[] objects = new Object[rs.getMetaData().getColumnCount()];
                 for (int idx = 0; idx < rs.getMetaData().getColumnCount(); idx++) {
