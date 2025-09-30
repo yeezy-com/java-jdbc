@@ -83,23 +83,7 @@ public class JdbcTemplate {
         } catch (InvocationTargetException | IllegalAccessException | InstantiationException e) {
             throw new RuntimeException(e);
         } finally {
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-            } catch (SQLException ignored) {}
-
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            } catch (SQLException ignored) {}
-
-            try {
-                if (conn != null) {
-                    conn.close();
-                }
-            } catch (SQLException ignored) {}
+            closeAllResources(rs, pstmt, conn);
         }
     }
 
@@ -135,49 +119,53 @@ public class JdbcTemplate {
         } catch (InvocationTargetException | IllegalAccessException | InstantiationException e) {
             throw new RuntimeException(e);
         } finally {
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-            } catch (SQLException ignored) {}
-
-            try {
-                if (pstmt != null) {
-                    pstmt.close();
-                }
-            } catch (SQLException ignored) {}
-
-            try {
-                if (conn != null) {
-                    conn.close();
-                }
-            } catch (SQLException ignored) {}
+            closeAllResources(rs, pstmt, conn);
         }
+    }
+
+    private void closeAllResources(ResultSet rs, PreparedStatement pstmt, Connection conn) {
+        try {
+            if (rs != null) {
+                rs.close();
+            }
+        } catch (SQLException ignored) {}
+
+        try {
+            if (pstmt != null) {
+                pstmt.close();
+            }
+        } catch (SQLException ignored) {}
+
+        try {
+            if (conn != null) {
+                conn.close();
+            }
+        } catch (SQLException ignored) {}
     }
 
     private void setParameters(PreparedStatement pstmt, Object ... params) throws SQLException {
         for (int idx = 0; idx < params.length; idx++) {
             Object param = params[idx];
-            String typeName = param.getClass().getTypeName();
+            String typeName = param.getClass().getSimpleName();
 
-            if (typeName.equals(String.class.getTypeName())) {
-                pstmt.setString(idx +1, (String) param);
-                return;
+            if (typeName.equals(String.class.getSimpleName())) {
+                pstmt.setString(idx+1, (String) param);
+                continue;
             }
-            if (typeName.equals(Integer.class.getTypeName()) || typeName.equals(int.class.getTypeName())) {
-                pstmt.setInt(idx +1, (int) param);
-                return;
+            if (typeName.equals(Integer.class.getSimpleName()) || typeName.equals(int.class.getSimpleName())) {
+                pstmt.setInt(idx+1, (int) param);
+                continue;
             }
-            if (typeName.equals(Double.class.getTypeName()) || typeName.equals(double.class.getTypeName())) {
-                pstmt.setDouble(idx +1, (double) param);
-                return;
+            if (typeName.equals(Double.class.getSimpleName()) || typeName.equals(double.class.getSimpleName())) {
+                pstmt.setDouble(idx+1, (double) param);
+                continue;
             }
-            if (typeName.equals(Long.class.getTypeName()) || typeName.equals(long.class.getTypeName())) {
-                pstmt.setLong(idx +1, (long) param);
-                return;
+            if (typeName.equals(Long.class.getSimpleName()) || typeName.equals(long.class.getSimpleName())) {
+                pstmt.setLong(idx+1, (long) param);
+                continue;
             }
 
-            pstmt.setObject(idx + 1, param);
+            pstmt.setObject(idx+1, param);
         }
     }
 
