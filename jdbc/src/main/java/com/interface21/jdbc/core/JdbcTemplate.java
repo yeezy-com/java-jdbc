@@ -58,10 +58,8 @@ public class JdbcTemplate {
             }
 
             return result;
-        } catch (SQLException e) {
+        } catch (SQLException | InvocationTargetException | IllegalAccessException | InstantiationException e) {
             log.error(e.getMessage(), e);
-            throw new RuntimeException(e);
-        } catch (InvocationTargetException | IllegalAccessException | InstantiationException e) {
             throw new RuntimeException(e);
         } finally {
             try {
@@ -95,10 +93,8 @@ public class JdbcTemplate {
                 return constructor.newInstance(objects);
             }
             return null;
-        } catch (SQLException e) {
+        } catch (SQLException | InvocationTargetException | IllegalAccessException | InstantiationException e) {
             log.error(e.getMessage(), e);
-            throw new RuntimeException(e);
-        } catch (InvocationTargetException | IllegalAccessException | InstantiationException e) {
             throw new RuntimeException(e);
         } finally {
             try {
