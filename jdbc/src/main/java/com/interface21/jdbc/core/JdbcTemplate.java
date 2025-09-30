@@ -118,7 +118,7 @@ public class JdbcTemplate {
             if (rs.next()) {
                 Constructor<?> constructor = findConstructor(resultClass, rs);
                 if (constructor == null) {
-                    throw new RuntimeException();
+                    throw new RuntimeException("모든 필드에 대한 생성자가 필요합니다.");
                 }
 
                 Object[] objects = new Object[rs.getMetaData().getColumnCount()];
