@@ -1,7 +1,8 @@
 package com.interface21.jdbc.core;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.List;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -28,9 +29,13 @@ class JdbcTemplateTest {
 
         jdbcTemplate.update(insertSql, user.getName(), user.getPassword());
 
-        TestUser findUser = (TestUser) jdbcTemplate.findOne(findSql, TestUser.class, user.getName());
-        Assertions.assertThat(findUser.getName()).isEqualTo(user.getName());
-        Assertions.assertThat(findUser.getPassword()).isEqualTo(user.getPassword());
+        TestUser findUser = jdbcTemplate.findOne(findSql, rs -> new TestUser(
+            rs.getLong("id"),
+            rs.getString("name"),
+            rs.getString("password")
+        ), user.getName());
+        assertThat(findUser.getName()).isEqualTo(user.getName());
+        assertThat(findUser.getPassword()).isEqualTo(user.getPassword());
     }
 
     @Test
@@ -49,8 +54,13 @@ class JdbcTemplateTest {
         jdbcTemplate.update(insertSql, user2.getName(), user2.getPassword());
         jdbcTemplate.update(insertSql, user3.getName(), user3.getPassword());
 
-        List<Object> objects = jdbcTemplate.find(findAllSql, TestUser.class);
+        List<TestUser> users = jdbcTemplate.find(findAllSql, rs -> new TestUser(
+            rs.getLong("id"),
+            rs.getString("name"),
+            rs.getString("password")
+        ));
 
-        Assertions.assertThat(objects.size()).isEqualTo(3);
+        assertThat(users.size()).isEqualTo(3);
+        assertThat(users.getFirst()).isInstanceOf(TestUser.class);
     }
 }

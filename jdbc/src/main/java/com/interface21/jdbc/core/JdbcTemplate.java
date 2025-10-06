@@ -1,11 +1,8 @@
 package com.interface21.jdbc.core;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,35 +33,27 @@ public class JdbcTemplate {
         }
     }
 
-    public List<Object> find(final String sql, final Class<?> resultClass) {
+    public <T> List<T> find(final String sql, final RowMapper<T> rowMapper) {
         try (Connection conn = dataSource.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             log.debug("query : {}", sql);
 
-            List<Object> result = new ArrayList<>();
+            List<T> result = new ArrayList<>();
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    Constructor<?> constructor = findConstructor(resultClass, rs);
-                    assert constructor != null;
-
-                    Object[] objects = new Object[rs.getMetaData().getColumnCount()];
-                    for (int idx = 0; idx < rs.getMetaData().getColumnCount(); idx++) {
-                        objects[idx] = rs.getObject(idx + 1);
-                    }
-
-                    result.add(constructor.newInstance(objects));
+                    result.add(rowMapper.map(rs));
                 }
             }
 
             return result;
-        } catch (SQLException | InvocationTargetException | IllegalAccessException | InstantiationException e) {
+        } catch (SQLException e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }
     }
 
-    public Object findOne(final String sql, final Class<?> resultClass, final Object ... params) {
+    public <T> T findOne(final String sql, final RowMapper rowMapper, final Object ... params) {
         try (Connection conn = dataSource.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             setParameters(pstmt, params);
@@ -73,21 +62,12 @@ public class JdbcTemplate {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    Constructor<?> constructor = findConstructor(resultClass, rs);
-                    if (constructor == null) {
-                        throw new RuntimeException("모든 필드에 대한 생성자가 필요합니다.");
-                    }
-
-                    Object[] objects = new Object[rs.getMetaData().getColumnCount()];
-                    for (int idx = 0; idx < rs.getMetaData().getColumnCount(); idx++) {
-                        objects[idx] = rs.getObject(idx + 1);
-                    }
-
-                    return constructor.newInstance(objects);
+                    return (T) rowMapper.map(rs);
                 }
             }
+
             return null;
-        } catch (SQLException | InvocationTargetException | IllegalAccessException | InstantiationException e) {
+        } catch (SQLException e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }
@@ -97,15 +77,5 @@ public class JdbcTemplate {
         for (int idx = 0; idx < params.length; idx++) {
             pstmt.setObject(idx+1, params[idx]);
         }
-    }
-
-    private Constructor<?> findConstructor(Class<?> resultClass, ResultSet rs) throws SQLException {
-        ResultSetMetaData metaData = rs.getMetaData();
-        for (Constructor<?> constructor : resultClass.getConstructors()) {
-            if (constructor.getParameterCount() == metaData.getColumnCount()) {
-                return constructor;
-            }
-        }
-        return null;
     }
 }
