@@ -37,10 +37,9 @@ public class JdbcTemplate {
     }
 
     public List<Object> find(final String sql, final Class<?> resultClass) {
-        ResultSet rs = null;
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            rs = pstmt.executeQuery();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
 
             log.debug("query : {}", sql);
 
@@ -61,21 +60,14 @@ public class JdbcTemplate {
         } catch (SQLException | InvocationTargetException | IllegalAccessException | InstantiationException e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException(e);
-        } finally {
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-            } catch (SQLException ignored) {}
         }
     }
 
     public Object findOne(final String sql, final Class<?> resultClass, final Object ... params) {
-        ResultSet rs = null;
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
             setParameters(pstmt, params);
-            rs = pstmt.executeQuery();
 
             log.debug("query : {}", sql);
 
@@ -96,12 +88,6 @@ public class JdbcTemplate {
         } catch (SQLException | InvocationTargetException | IllegalAccessException | InstantiationException e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException(e);
-        } finally {
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-            } catch (SQLException ignored) {}
         }
     }
 
