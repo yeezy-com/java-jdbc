@@ -53,7 +53,7 @@ public class JdbcTemplate {
         }
     }
 
-    public <T> T findOne(final String sql, final RowMapper rowMapper, final Object ... params) {
+    public <T> T findOne(final String sql, final RowMapper<T> rowMapper, final Object ... params) {
         try (Connection conn = dataSource.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             setParameters(pstmt, params);
@@ -62,7 +62,7 @@ public class JdbcTemplate {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    return (T) rowMapper.map(rs);
+                    return rowMapper.map(rs);
                 }
             }
 
