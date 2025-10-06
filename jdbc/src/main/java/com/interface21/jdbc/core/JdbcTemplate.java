@@ -95,27 +95,7 @@ public class JdbcTemplate {
 
     private void setParameters(PreparedStatement pstmt, Object ... params) throws SQLException {
         for (int idx = 0; idx < params.length; idx++) {
-            Object param = params[idx];
-            String typeName = param.getClass().getSimpleName();
-
-            if (typeName.equals(String.class.getSimpleName())) {
-                pstmt.setString(idx+1, (String) param);
-                continue;
-            }
-            if (typeName.equals(Integer.class.getSimpleName()) || typeName.equals(int.class.getSimpleName())) {
-                pstmt.setInt(idx+1, (int) param);
-                continue;
-            }
-            if (typeName.equals(Double.class.getSimpleName()) || typeName.equals(double.class.getSimpleName())) {
-                pstmt.setDouble(idx+1, (double) param);
-                continue;
-            }
-            if (typeName.equals(Long.class.getSimpleName()) || typeName.equals(long.class.getSimpleName())) {
-                pstmt.setLong(idx+1, (long) param);
-                continue;
-            }
-
-            pstmt.setObject(idx+1, param);
+            pstmt.setObject(idx+1, params[idx]);
         }
     }
 
