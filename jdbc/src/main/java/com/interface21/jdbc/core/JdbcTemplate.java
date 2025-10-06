@@ -38,22 +38,23 @@ public class JdbcTemplate {
 
     public List<Object> find(final String sql, final Class<?> resultClass) {
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             log.debug("query : {}", sql);
 
             List<Object> result = new ArrayList<>();
-            while (rs.next()) {
-                Constructor<?> constructor = findConstructor(resultClass, rs);
-                assert constructor != null;
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Constructor<?> constructor = findConstructor(resultClass, rs);
+                    assert constructor != null;
 
-                Object[] objects = new Object[rs.getMetaData().getColumnCount()];
-                for (int idx = 0; idx < rs.getMetaData().getColumnCount(); idx++) {
-                    objects[idx] = rs.getObject(idx+1);
+                    Object[] objects = new Object[rs.getMetaData().getColumnCount()];
+                    for (int idx = 0; idx < rs.getMetaData().getColumnCount(); idx++) {
+                        objects[idx] = rs.getObject(idx + 1);
+                    }
+
+                    result.add(constructor.newInstance(objects));
                 }
-
-                result.add(constructor.newInstance(objects));
             }
 
             return result;
@@ -65,24 +66,25 @@ public class JdbcTemplate {
 
     public Object findOne(final String sql, final Class<?> resultClass, final Object ... params) {
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             setParameters(pstmt, params);
 
             log.debug("query : {}", sql);
 
-            if (rs.next()) {
-                Constructor<?> constructor = findConstructor(resultClass, rs);
-                if (constructor == null) {
-                    throw new RuntimeException("모든 필드에 대한 생성자가 필요합니다.");
-                }
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    Constructor<?> constructor = findConstructor(resultClass, rs);
+                    if (constructor == null) {
+                        throw new RuntimeException("모든 필드에 대한 생성자가 필요합니다.");
+                    }
 
-                Object[] objects = new Object[rs.getMetaData().getColumnCount()];
-                for (int idx = 0; idx < rs.getMetaData().getColumnCount(); idx++) {
-                    objects[idx] = rs.getObject(idx+1);
-                }
+                    Object[] objects = new Object[rs.getMetaData().getColumnCount()];
+                    for (int idx = 0; idx < rs.getMetaData().getColumnCount(); idx++) {
+                        objects[idx] = rs.getObject(idx + 1);
+                    }
 
-                return constructor.newInstance(objects);
+                    return constructor.newInstance(objects);
+                }
             }
             return null;
         } catch (SQLException | InvocationTargetException | IllegalAccessException | InstantiationException e) {
