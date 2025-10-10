@@ -35,9 +35,10 @@ public class JdbcTemplate {
         }
     }
 
-    public <T> List<T> find(final String sql, final RowMapper<T> rowMapper) {
+    public <T> List<T> find(final String sql, final RowMapper<T> rowMapper, final Object ... params) {
         try (Connection conn = dataSource.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            setParameters(pstmt, params);
 
             log.debug("query : {}", sql);
 
