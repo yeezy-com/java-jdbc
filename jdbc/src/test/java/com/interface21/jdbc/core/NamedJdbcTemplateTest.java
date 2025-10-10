@@ -26,11 +26,12 @@ class NamedJdbcTemplateTest {
         // given
         String sql = "insert into test_users (name, password) values (:name, :password)";
         when(mockJdbcTemplate.update(anyString())).thenReturn(1);
+        NamedSqlParamMap params = new NamedSqlParamMap()
+            .addValue("password", "password")
+            .addValue("name", "test");
 
         // when
-        namedJdbcTemplate.setValue("password", "password")
-            .setValue("name", "test")
-            .update(sql);
+        namedJdbcTemplate.update(sql, params);
 
         // then
         verify(mockJdbcTemplate).update(anyString(), captorParameters.capture());

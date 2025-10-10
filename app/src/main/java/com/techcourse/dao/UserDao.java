@@ -1,5 +1,6 @@
 package com.techcourse.dao;
 
+import com.interface21.jdbc.core.NamedSqlParamMap;
 import com.interface21.jdbc.core.JdbcTemplate;
 import com.interface21.jdbc.core.NamedJdbcTemplate;
 import com.interface21.jdbc.bind.RowMapper;
@@ -32,21 +33,25 @@ public class UserDao {
         final var sql = "insert into users (account, password, email) values (:account, :password, :email)";
 
         log.debug("insert user: {}", user);
-        namedJdbcTemplate.setValue("account", user.getAccount())
-            .setValue("password", user.getPassword())
-            .setValue("email", user.getEmail())
-            .update(sql);
+        NamedSqlParamMap params = new NamedSqlParamMap()
+            .addValue("account", user.getAccount())
+            .addValue("password", user.getPassword())
+            .addValue("email", user.getEmail());
+
+        namedJdbcTemplate.update(sql, params);
     }
 
     public void update(final User user) {
         final var sql = "update users set account = :account, password = :password, email = :email where id = :id";
 
         log.info("update user: {}", user);
-        namedJdbcTemplate.setValue("account", user.getAccount())
-            .setValue("email", user.getEmail())
-            .setValue("id", user.getId())
-            .setValue("password", user.getPassword())
-            .update(sql);
+        NamedSqlParamMap params = new NamedSqlParamMap()
+            .addValue("account", user.getAccount())
+            .addValue("email", user.getEmail())
+            .addValue("id", user.getId())
+            .addValue("password", user.getPassword());
+
+        namedJdbcTemplate.update(sql, params);
     }
 
     public List<User> findAll() {
@@ -58,16 +63,18 @@ public class UserDao {
     public Optional<User> findById(final Long id) {
         final var sql = "select id, account, password, email from users where id = :id";
 
-        User user = namedJdbcTemplate.setValue("id", id)
-            .selectForOne(sql, userRowMapper());
+        NamedSqlParamMap param = new NamedSqlParamMap("id", id);
+        User user = namedJdbcTemplate.selectForOne(sql, param, userRowMapper());
+
         return Optional.of(user);
     }
 
     public Optional<User> findByAccount(final String account) {
         final var sql = "select id, account, password, email from users where account = :account";
 
-        User user = namedJdbcTemplate.setValue("account", account)
-            .selectForOne(sql, userRowMapper());
+        NamedSqlParamMap param = new NamedSqlParamMap("account", account);
+        User user = namedJdbcTemplate.selectForOne(sql, param, userRowMapper());
+
         return Optional.of(user);
     }
 
