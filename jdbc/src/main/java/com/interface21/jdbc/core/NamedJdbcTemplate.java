@@ -1,7 +1,6 @@
 package com.interface21.jdbc.core;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import com.interface21.jdbc.bind.RowMapper;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;

@@ -1,4 +1,4 @@
-package com.interface21.jdbc.core;
+package com.interface21.jdbc.bind;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
