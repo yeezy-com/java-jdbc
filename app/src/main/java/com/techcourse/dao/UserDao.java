@@ -1,6 +1,7 @@
 package com.techcourse.dao;
 
 import com.interface21.jdbc.core.JdbcTemplate;
+import com.interface21.jdbc.core.NamedJdbcTemplate;
 import com.interface21.jdbc.core.RowMapper;
 import com.techcourse.domain.User;
 import java.util.List;
@@ -13,46 +14,61 @@ public class UserDao {
 
     private static final Logger log = LoggerFactory.getLogger(UserDao.class);
 
-    private final JdbcTemplate jdbcTemplate;
+    private final NamedJdbcTemplate namedJdbcTemplate;
 
     public UserDao(final DataSource dataSource) {
-        this.jdbcTemplate = new JdbcTemplate(dataSource);
+        this.namedJdbcTemplate = new NamedJdbcTemplate(dataSource);
     }
 
     public UserDao(final JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+        this.namedJdbcTemplate = new NamedJdbcTemplate(jdbcTemplate);
+    }
+
+    public UserDao(final NamedJdbcTemplate namedJdbcTemplate) {
+        this.namedJdbcTemplate = namedJdbcTemplate;
     }
 
     public void insert(final User user) {
-        final var sql = "insert into users (account, password, email) values (?, ?, ?)";
+        final var sql = "insert into users (account, password, email) values (:account, :password, :email)";
 
         log.debug("insert user: {}", user);
-        jdbcTemplate.update(sql, user.getAccount(), user.getPassword(), user.getEmail());
+        namedJdbcTemplate.setValue("account", user.getAccount())
+            .setValue("password", user.getPassword())
+            .setValue("email", user.getEmail())
+            .update(sql);
     }
 
     public void update(final User user) {
-        final var sql = "update users set account = ?, password = ?, email = ? where id = ?";
+        final var sql = "update users set account = :account, password = :password, email = :email where id = :id";
 
         log.info("update user: {}", user);
-        jdbcTemplate.update(sql, user.getAccount(), user.getPassword(), user.getEmail(), user.getId());
+        namedJdbcTemplate.setValue("account", user.getAccount())
+            .setValue("email", user.getEmail())
+            .setValue("id", user.getId())
+            .setValue("password", user.getPassword())
+            .update(sql);
     }
 
     public List<User> findAll() {
         final var sql = "select id, account, password, email from users";
 
-        return jdbcTemplate.find(sql, userRowMapper());
+        return namedJdbcTemplate.select(sql, userRowMapper());
     }
 
     public Optional<User> findById(final Long id) {
-        final var sql = "select id, account, password, email from users where id = ?";
+        final var sql = "select id, account, password, email from users where id = :id";
 
-        return Optional.of(jdbcTemplate.findOne(sql, userRowMapper(), id));
+        User user = namedJdbcTemplate.setValue("id", id)
+            .selectForOne(sql, userRowMapper());
+        return Optional.of(user);
     }
 
     public Optional<User> findByAccount(final String account) {
-        final var sql = "select id, account, password, email from users where account = ?";
+        final var sql = "select id, account, password, email from users where account = :account";
 
-        return Optional.of(jdbcTemplate.findOne(sql, userRowMapper(), account));
+        User user = namedJdbcTemplate.setValue("account", account)
+            .selectForOne(sql, userRowMapper());
+        return Optional.of(user);
     }
 
     private RowMapper<User> userRowMapper() {
