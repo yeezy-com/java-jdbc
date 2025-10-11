@@ -62,7 +62,7 @@ public class UserDao {
         NamedSqlParamMap param = new NamedSqlParamMap("id", id);
         User user = namedJdbcTemplate.selectForOne(sql, param, userRowMapper());
 
-        return Optional.of(user);
+        return Optional.ofNullable(user);
     }
 
     public Optional<User> findByAccount(final String account) {
@@ -71,7 +71,7 @@ public class UserDao {
         NamedSqlParamMap param = new NamedSqlParamMap("account", account);
         User user = namedJdbcTemplate.selectForOne(sql, param, userRowMapper());
 
-        return Optional.of(user);
+        return Optional.ofNullable(user);
     }
 
     private RowMapper<User> userRowMapper() {
