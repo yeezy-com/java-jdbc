@@ -25,10 +25,6 @@ public class UserDao {
         this.namedJdbcTemplate = new NamedJdbcTemplate(jdbcTemplate);
     }
 
-    public UserDao(final NamedJdbcTemplate namedJdbcTemplate) {
-        this.namedJdbcTemplate = namedJdbcTemplate;
-    }
-
     public void insert(final User user) {
         final var sql = "insert into users (account, password, email) values (:account, :password, :email)";
 
