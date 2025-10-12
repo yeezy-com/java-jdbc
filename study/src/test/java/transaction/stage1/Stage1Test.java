@@ -34,10 +34,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  *   Read phenomena | Dirty reads | Non-repeatable reads | Phantom reads
  * Isolation level  |             |                      |
  * -----------------|-------------|----------------------|--------------
- * Read Uncommitted |             |                      |
- * Read Committed   |             |                      |
- * Repeatable Read  |             |                      |
- * Serializable     |             |                      |
+ * Read Uncommitted |      +      |          +           |       +
+ * Read Committed   |      -      |          +           |       +
+ * Repeatable Read  |      -      |          -           |       +
+ * Serializable     |      -      |          -           |       -
  */
 class Stage1Test {
 
@@ -124,7 +124,7 @@ class Stage1Test {
      * Repeatable Read  |          -
      * Serializable     |          -
      */
-    /* None-Repeatable Read : 하나의 트랜잭션에서 여러 번 조회시 다른 트랜잭션에 의해 다른 결과가 나오는 현상 */
+    /* None-Repeatable Read : 하나의 트랜잭션에서 같은 키를 가진 데이터를 여러 번 조회시 다른 트랜잭션에 의해 다른 결과가 나오는 현상 */
 
     /**
      * 결과 예상
@@ -193,11 +193,12 @@ class Stage1Test {
      *   Read phenomena | Phantom reads
      * Isolation level  |
      * -----------------|--------------
-     * Read Uncommitted |
-     * Read Committed   |
-     * Repeatable Read  |
-     * Serializable     |
+     * Read Uncommitted |       +
+     * Read Committed   |       +
+     * Repeatable Read  |       +
+     * Serializable     |       -
      */
+    /* Phantom Read : 범위 조회 시 전에 없던 데이터가 조회되는 현상 */
     @Test
     void phantomReading() throws SQLException {
 
@@ -217,7 +218,7 @@ class Stage1Test {
         connection.setAutoCommit(false);
 
         // 적절한 격리 레벨을 찾는다.
-        final int isolationLevel = Connection.TRANSACTION_NONE;
+        final int isolationLevel = Connection.TRANSACTION_SERIALIZABLE;
 
         // 트랜잭션 격리 레벨을 설정한다.
         connection.setTransactionIsolation(isolationLevel);
@@ -259,7 +260,7 @@ class Stage1Test {
 
     private static DataSource createMySQLDataSource(final JdbcDatabaseContainer<?> container) {
         final var config = new HikariConfig();
-        config.setJdbcUrl(container.getJdbcUrl());
+        config.setJdbcUrl(container.getJdbcUrl() + "?allowMultiQueries=true");
         config.setUsername(container.getUsername());
         config.setPassword(container.getPassword());
         config.setDriverClassName(container.getDriverClassName());
