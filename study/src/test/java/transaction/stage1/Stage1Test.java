@@ -58,11 +58,12 @@ class Stage1Test {
      *   Read phenomena | Dirty reads
      * Isolation level  |
      * -----------------|-------------
-     * Read Uncommitted |
-     * Read Committed   |
-     * Repeatable Read  |
-     * Serializable     |
+     * Read Uncommitted |      +
+     * Read Committed   |      -
+     * Repeatable Read  |      -
+     * Serializable     |      -
      */
+    /* Dirty Read : 한 트랜잭션이 실행 중일 때 다른 트랜잭션에 의해 수정되었지만, 아직 커밋되지 않은 행의 데이터를 읽을 수 있을때 발생한다. */
     @Test
     void dirtyReading() throws SQLException {
         setUp(createH2DataSource());
@@ -81,7 +82,14 @@ class Stage1Test {
             final var subConnection = dataSource.getConnection();
 
             // 적절한 격리 레벨을 찾는다.
-            final int isolationLevel = Connection.TRANSACTION_NONE;
+            /**
+             * 트랜잭션 없음 - Connection.TRANSACTION_NONE -> h2 데이터베이스에서 지원하지 않음.
+             * 커밋되지 않은 데이터도 조회 - Connection.TRANSACTION_READ_UNCOMMITTED
+             * 커밋된 데이터만 조회 - Connection.TRANSACTION_READ_COMMITTED
+             * 언두 로그를 통한 트랜잭션 - Connection.TRANSACTION_REPEATABLE_READ
+             * 트랜잭션 순차적 처리 - Connection.TRANSACTION_SERIALIZABLE
+              */
+            final int isolationLevel = Connection.TRANSACTION_SERIALIZABLE;
 
             // 트랜잭션 격리 레벨을 설정한다.
             subConnection.setTransactionIsolation(isolationLevel);
