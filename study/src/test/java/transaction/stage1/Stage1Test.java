@@ -119,10 +119,22 @@ class Stage1Test {
      *   Read phenomena | Non-repeatable reads
      * Isolation level  |
      * -----------------|---------------------
-     * Read Uncommitted |
-     * Read Committed   |
-     * Repeatable Read  |
-     * Serializable     |
+     * Read Uncommitted |          +
+     * Read Committed   |          +
+     * Repeatable Read  |          -
+     * Serializable     |          -
+     */
+    /* None-Repeatable Read : 하나의 트랜잭션에서 여러 번 조회시 다른 트랜잭션에 의해 다른 결과가 나오는 현상 */
+
+    /**
+     * 결과 예상
+     *   Read phenomena | Non-repeatable reads
+     * Isolation level  |
+     * -----------------|---------------------
+     * Read Uncommitted |          +
+     * Read Committed   |          +
+     * Repeatable Read  | -(기본적으로 발생x), +(SELECT -> 다른 트랜잭션 커밋 -> SELECT FOR UPDATE)
+     * Serializable     |          -
      */
     @Test
     void noneRepeatable() throws SQLException {
@@ -138,7 +150,7 @@ class Stage1Test {
         connection.setAutoCommit(false);
 
         // 적절한 격리 레벨을 찾는다.
-        final int isolationLevel = Connection.TRANSACTION_NONE;
+        final int isolationLevel = Connection.TRANSACTION_SERIALIZABLE;
 
         // 트랜잭션 격리 레벨을 설정한다.
         connection.setTransactionIsolation(isolationLevel);
