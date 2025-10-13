@@ -1,8 +1,12 @@
 package com.interface21.jdbc.core;
 
+import com.interface21.dao.DataAccessException;
+import com.interface21.jdbc.bind.RowMapper;
 import java.sql.Connection;
+import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLDataException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,22 +24,24 @@ public class JdbcTemplate {
         this.dataSource = dataSource;
     }
 
-    public void update(String sql, Object ... params) {
+    public int update(String sql, Object ... params) {
         try (Connection conn = dataSource.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
             log.debug("query : {}", sql);
 
             setParameters(pstmt, params);
-            pstmt.executeUpdate();
+            return pstmt.executeUpdate();
         } catch (SQLException e) {
             log.error(e.getMessage(), e);
-            throw new RuntimeException(e);
+            throw new DataAccessException(e);
         }
     }
 
-    public <T> List<T> find(final String sql, final RowMapper<T> rowMapper) {
+    public <T> List<T> find(final String sql, final RowMapper<T> rowMapper, final Object ... params) {
         try (Connection conn = dataSource.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            setParameters(pstmt, params);
 
             log.debug("query : {}", sql);
 
@@ -49,7 +55,7 @@ public class JdbcTemplate {
             return result;
         } catch (SQLException e) {
             log.error(e.getMessage(), e);
-            throw new RuntimeException(e);
+            throw new DataAccessException(e);
         }
     }
 
@@ -69,11 +75,16 @@ public class JdbcTemplate {
             return null;
         } catch (SQLException e) {
             log.error(e.getMessage(), e);
-            throw new RuntimeException(e);
+            throw new DataAccessException(e);
         }
     }
 
     private void setParameters(PreparedStatement pstmt, Object ... params) throws SQLException {
+        ParameterMetaData parameterMetaData = pstmt.getParameterMetaData();
+        if (parameterMetaData.getParameterCount() != params.length) {
+            throw new SQLDataException("파라미터 개수가 쿼리 매핑 데이터 개수와 다릅니다.");
+        }
+
         for (int idx = 0; idx < params.length; idx++) {
             pstmt.setObject(idx+1, params[idx]);
         }

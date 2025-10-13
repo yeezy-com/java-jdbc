@@ -34,10 +34,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  *   Read phenomena | Dirty reads | Non-repeatable reads | Phantom reads
  * Isolation level  |             |                      |
  * -----------------|-------------|----------------------|--------------
- * Read Uncommitted |             |                      |
- * Read Committed   |             |                      |
- * Repeatable Read  |             |                      |
- * Serializable     |             |                      |
+ * Read Uncommitted |      +      |          +           |       +
+ * Read Committed   |      -      |          +           |       +
+ * Repeatable Read  |      -      |          -           |       +
+ * Serializable     |      -      |          -           |       -
  */
 class Stage1Test {
 
@@ -58,11 +58,12 @@ class Stage1Test {
      *   Read phenomena | Dirty reads
      * Isolation level  |
      * -----------------|-------------
-     * Read Uncommitted |
-     * Read Committed   |
-     * Repeatable Read  |
-     * Serializable     |
+     * Read Uncommitted |      +
+     * Read Committed   |      -
+     * Repeatable Read  |      -
+     * Serializable     |      -
      */
+    /* Dirty Read : 한 트랜잭션이 실행 중일 때 다른 트랜잭션에 의해 수정되었지만, 아직 커밋되지 않은 행의 데이터를 읽을 수 있을때 발생한다. */
     @Test
     void dirtyReading() throws SQLException {
         setUp(createH2DataSource());
@@ -81,7 +82,14 @@ class Stage1Test {
             final var subConnection = dataSource.getConnection();
 
             // 적절한 격리 레벨을 찾는다.
-            final int isolationLevel = Connection.TRANSACTION_NONE;
+            /**
+             * 트랜잭션 없음 - Connection.TRANSACTION_NONE -> h2 데이터베이스에서 지원하지 않음.
+             * 커밋되지 않은 데이터도 조회 - Connection.TRANSACTION_READ_UNCOMMITTED
+             * 커밋된 데이터만 조회 - Connection.TRANSACTION_READ_COMMITTED
+             * 언두 로그를 통한 트랜잭션 - Connection.TRANSACTION_REPEATABLE_READ
+             * 트랜잭션 순차적 처리 - Connection.TRANSACTION_SERIALIZABLE
+              */
+            final int isolationLevel = Connection.TRANSACTION_SERIALIZABLE;
 
             // 트랜잭션 격리 레벨을 설정한다.
             subConnection.setTransactionIsolation(isolationLevel);
@@ -111,10 +119,22 @@ class Stage1Test {
      *   Read phenomena | Non-repeatable reads
      * Isolation level  |
      * -----------------|---------------------
-     * Read Uncommitted |
-     * Read Committed   |
-     * Repeatable Read  |
-     * Serializable     |
+     * Read Uncommitted |          +
+     * Read Committed   |          +
+     * Repeatable Read  |          -
+     * Serializable     |          -
+     */
+    /* None-Repeatable Read : 하나의 트랜잭션에서 같은 키를 가진 데이터를 여러 번 조회시 다른 트랜잭션에 의해 다른 결과가 나오는 현상 */
+
+    /**
+     * 결과 예상
+     *   Read phenomena | Non-repeatable reads
+     * Isolation level  |
+     * -----------------|---------------------
+     * Read Uncommitted |          +
+     * Read Committed   |          +
+     * Repeatable Read  | -(기본적으로 발생x), +(SELECT -> 다른 트랜잭션 커밋 -> SELECT FOR UPDATE)
+     * Serializable     |          -
      */
     @Test
     void noneRepeatable() throws SQLException {
@@ -130,7 +150,7 @@ class Stage1Test {
         connection.setAutoCommit(false);
 
         // 적절한 격리 레벨을 찾는다.
-        final int isolationLevel = Connection.TRANSACTION_NONE;
+        final int isolationLevel = Connection.TRANSACTION_SERIALIZABLE;
 
         // 트랜잭션 격리 레벨을 설정한다.
         connection.setTransactionIsolation(isolationLevel);
@@ -173,11 +193,12 @@ class Stage1Test {
      *   Read phenomena | Phantom reads
      * Isolation level  |
      * -----------------|--------------
-     * Read Uncommitted |
-     * Read Committed   |
-     * Repeatable Read  |
-     * Serializable     |
+     * Read Uncommitted |       +
+     * Read Committed   |       +
+     * Repeatable Read  |       +
+     * Serializable     |       -
      */
+    /* Phantom Read : 범위 조회 시 전에 없던 데이터가 조회되는 현상 */
     @Test
     void phantomReading() throws SQLException {
 
@@ -197,7 +218,7 @@ class Stage1Test {
         connection.setAutoCommit(false);
 
         // 적절한 격리 레벨을 찾는다.
-        final int isolationLevel = Connection.TRANSACTION_NONE;
+        final int isolationLevel = Connection.TRANSACTION_SERIALIZABLE;
 
         // 트랜잭션 격리 레벨을 설정한다.
         connection.setTransactionIsolation(isolationLevel);
@@ -239,7 +260,7 @@ class Stage1Test {
 
     private static DataSource createMySQLDataSource(final JdbcDatabaseContainer<?> container) {
         final var config = new HikariConfig();
-        config.setJdbcUrl(container.getJdbcUrl());
+        config.setJdbcUrl(container.getJdbcUrl() + "?allowMultiQueries=true");
         config.setUsername(container.getUsername());
         config.setPassword(container.getPassword());
         config.setDriverClassName(container.getDriverClassName());
