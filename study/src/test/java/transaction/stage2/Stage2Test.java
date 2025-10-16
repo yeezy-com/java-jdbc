@@ -38,6 +38,8 @@ class Stage2Test {
     /**
      * 생성된 트랜잭션이 몇 개인가?
      * 왜 그런 결과가 나왔을까?
+     * 1개
+     * FirstUserService의 트랜잭션을 그대로 이어받은듯
      */
     @Test
     void testRequired() {
@@ -45,13 +47,15 @@ class Stage2Test {
 
         log.info("transactions : {}", actual);
         assertThat(actual)
-                .hasSize(0)
-                .containsExactly("");
+                .hasSize(1)
+                .containsExactly("transaction.stage2.FirstUserService.saveFirstTransactionWithRequired");
     }
 
     /**
      * 생성된 트랜잭션이 몇 개인가?
      * 왜 그런 결과가 나왔을까?
+     * 2개
+     * 새로운 트랜잭션을 생성해서 SecondUserService를 수행한듯
      */
     @Test
     void testRequiredNew() {
@@ -59,27 +63,37 @@ class Stage2Test {
 
         log.info("transactions : {}", actual);
         assertThat(actual)
-                .hasSize(0)
-                .containsExactly("");
+                .hasSize(2)
+                .containsExactly("transaction.stage2.SecondUserService.saveSecondTransactionWithRequiresNew",
+                    "transaction.stage2.FirstUserService.saveFirstTransactionWithRequiredNew");
     }
 
     /**
      * firstUserService.saveAndExceptionWithRequiredNew()에서 강제로 예외를 발생시킨다.
      * REQUIRES_NEW 일 때 예외로 인한 롤백이 발생하면서 어떤 상황이 발생하는 지 확인해보자.
+     * 자식에서 예외 => 부모, 자식 모두 롤백
+     * 부모에서 예외 => 자식 커밋(자식이 정상 수행되었다면), 부모 롤백
+     *
+     * REQUIRED?
+     * 자식에서 예외 => 부모, 자식 모두 롤백
+     * 부모에서 예외 /
      */
     @Test
     void testRequiredNewWithRollback() {
-        assertThat(firstUserService.findAll()).hasSize(-1);
+        assertThat(firstUserService.findAll()).hasSize(0);
 
         assertThatThrownBy(() -> firstUserService.saveAndExceptionWithRequiredNew())
                 .isInstanceOf(RuntimeException.class);
 
-        assertThat(firstUserService.findAll()).hasSize(-1);
+        assertThat(firstUserService.findAll()).hasSize(1);
     }
 
     /**
      * FirstUserService.saveFirstTransactionWithSupports() 메서드를 보면 @Transactional이 주석으로 되어 있다.
      * 주석인 상태에서 테스트를 실행했을 때와 주석을 해제하고 테스트를 실행했을 때 어떤 차이점이 있는지 확인해보자.
+     * ----
+     * 트랜잭션이 있으면 참여
+     * 트랜잭션이 없으면 없는채로 수행
      */
     @Test
     void testSupports() {
@@ -87,14 +101,18 @@ class Stage2Test {
 
         log.info("transactions : {}", actual);
         assertThat(actual)
-                .hasSize(0)
-                .containsExactly("");
+                .hasSize(1)
+                .containsExactly("transaction.stage2.SecondUserService.saveSecondTransactionWithSupports");
     }
 
     /**
      * FirstUserService.saveFirstTransactionWithMandatory() 메서드를 보면 @Transactional이 주석으로 되어 있다.
      * 주석인 상태에서 테스트를 실행했을 때와 주석을 해제하고 테스트를 실행했을 때 어떤 차이점이 있는지 확인해보자.
      * SUPPORTS와 어떤 점이 다른지도 같이 챙겨보자.
+     * ----
+     * 트랜잭션이 없으면 예외 발생시킴
+     * 트랜잭션 있으면 참여
+     * 트랜잭션이 의무이다.
      */
     @Test
     void testMandatory() {
@@ -102,8 +120,8 @@ class Stage2Test {
 
         log.info("transactions : {}", actual);
         assertThat(actual)
-                .hasSize(0)
-                .containsExactly("");
+                .hasSize(1)
+                .containsExactly("transaction.stage2.FirstUserService.saveFirstTransactionWithMandatory");
     }
 
     /**
@@ -119,13 +137,17 @@ class Stage2Test {
 
         log.info("transactions : {}", actual);
         assertThat(actual)
-                .hasSize(0)
-                .containsExactly("");
+                .hasSize(2)
+                .containsExactly("transaction.stage2.SecondUserService.saveSecondTransactionWithNotSupported",
+                    "transaction.stage2.FirstUserService.saveFirstTransactionWithNotSupported");
     }
 
     /**
      * 아래 테스트는 왜 실패할까?
      * FirstUserService.saveFirstTransactionWithNested() 메서드의 @Transactional을 주석 처리하면 어떻게 될까?
+     * ----
+     * 기존 트랜잭션 있음 -> 중첩 트랜잭션을 생성
+     * 기존 트랜잭션 없음 -> 새로운 트랜잭션을 생성
      */
     @Test
     void testNested() {
@@ -133,12 +155,16 @@ class Stage2Test {
 
         log.info("transactions : {}", actual);
         assertThat(actual)
-                .hasSize(0)
-                .containsExactly("");
+                .hasSize(1)
+                .containsExactly("transaction.stage2.SecondUserService.saveSecondTransactionWithNested");
     }
 
     /**
      * 마찬가지로 @Transactional을 주석처리하면서 관찰해보자.
+     * ----
+     * 트랜잭션 자체를 지원하지 않는다.
+     * 있으면 예외
+     * 없으면 없는대로 수행
      */
     @Test
     void testNever() {
@@ -146,7 +172,7 @@ class Stage2Test {
 
         log.info("transactions : {}", actual);
         assertThat(actual)
-                .hasSize(0)
-                .containsExactly("");
+                .hasSize(1)
+                .containsExactly("transaction.stage2.SecondUserService.saveSecondTransactionWithNever");
     }
 }
