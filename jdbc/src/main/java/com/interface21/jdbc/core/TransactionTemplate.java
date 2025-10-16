@@ -32,6 +32,7 @@ public class TransactionTemplate {
                 try {
                     conn.rollback();
                 } catch (SQLException sqlException) {
+                    log.error(e.getMessage(), sqlException);
                     throw new DataAccessException(sqlException);
                 }
                 throw new DataAccessException(e);
@@ -39,10 +40,12 @@ public class TransactionTemplate {
                 try {
                     conn.setAutoCommit(true);
                 } catch (SQLException e) {
+                    log.error(e.getMessage(), e);
                     throw new DataAccessException(e);
                 }
             }
         } catch (SQLException e) {
+            log.error(e.getMessage(), e);
             throw new DataAccessException(e);
         }
     }
