@@ -30,10 +30,7 @@ public class UserDao {
         final var sql = "insert into users (account, password, email) values (:account, :password, :email)";
 
         log.debug("insert user: {}", user);
-        NamedSqlParamMap params = new NamedSqlParamMap()
-            .addValue("account", user.getAccount())
-            .addValue("password", user.getPassword())
-            .addValue("email", user.getEmail());
+        NamedSqlParamMap params = getSqlParamMapForInsert(user);
 
         namedJdbcTemplate.update(sql, params);
     }
@@ -42,23 +39,24 @@ public class UserDao {
         final var sql = "insert into users (account, password, email) values (:account, :password, :email)";
 
         log.debug("insert user: {}", user);
+        NamedSqlParamMap params = getSqlParamMapForInsert(user);
+
+        namedJdbcTemplate.update(connection, sql, params);
+    }
+
+    private NamedSqlParamMap getSqlParamMapForInsert(User user) {
         NamedSqlParamMap params = new NamedSqlParamMap()
             .addValue("account", user.getAccount())
             .addValue("password", user.getPassword())
             .addValue("email", user.getEmail());
-
-        namedJdbcTemplate.update(connection, sql, params);
+        return params;
     }
 
     public void update(final User user) {
         final var sql = "update users set account = :account, password = :password, email = :email where id = :id";
 
         log.info("update user: {}", user);
-        NamedSqlParamMap params = new NamedSqlParamMap()
-            .addValue("account", user.getAccount())
-            .addValue("email", user.getEmail())
-            .addValue("id", user.getId())
-            .addValue("password", user.getPassword());
+        NamedSqlParamMap params = getSqlParamMapForUpdate(user);
 
         namedJdbcTemplate.update(sql, params);
     }
@@ -67,13 +65,18 @@ public class UserDao {
         final var sql = "update users set account = :account, password = :password, email = :email where id = :id";
 
         log.info("update user: {}", user);
+        NamedSqlParamMap params = getSqlParamMapForUpdate(user);
+
+        namedJdbcTemplate.update(connection, sql, params);
+    }
+
+    private NamedSqlParamMap getSqlParamMapForUpdate(User user) {
         NamedSqlParamMap params = new NamedSqlParamMap()
             .addValue("account", user.getAccount())
             .addValue("email", user.getEmail())
             .addValue("id", user.getId())
             .addValue("password", user.getPassword());
-
-        namedJdbcTemplate.update(connection, sql, params);
+        return params;
     }
 
     public List<User> findAll() {
