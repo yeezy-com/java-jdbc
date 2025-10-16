@@ -10,6 +10,7 @@ import java.sql.SQLDataException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,48 +25,27 @@ public class JdbcTemplate {
         this.dataSource = dataSource;
     }
 
-    public int update(String sql, Object... params) {
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            log.debug("query : {}", sql);
-
-            setParameters(pstmt, params);
-            return pstmt.executeUpdate();
-        } catch (SQLException e) {
-            log.error(e.getMessage(), e);
-            throw new DataAccessException(e);
-        }
+    private <R> R execute(Function<Connection, R> executor, Connection connection) {
+        return executor.apply(connection);
     }
 
     public int update(final Connection connection, final String sql, final Object... params) {
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+        return execute(conn -> {
+            try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                log.debug("query : {}", sql);
 
-            log.debug("query : {}", sql);
-
-            setParameters(pstmt, params);
-            return pstmt.executeUpdate();
-        } catch (SQLException e) {
-            log.error(e.getMessage(), e);
-            throw new DataAccessException(e);
-        }
+                setParameters(pstmt, params);
+                return pstmt.executeUpdate();
+            } catch (SQLException e) {
+                log.error(e.getMessage(), e);
+                throw new DataAccessException(e);
+            }
+        }, connection);
     }
 
-    public <T> List<T> find(final String sql, final RowMapper<T> rowMapper, final Object... params) {
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            setParameters(pstmt, params);
-
-            log.debug("query : {}", sql);
-
-            List<T> result = new ArrayList<>();
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    result.add(rowMapper.map(rs));
-                }
-            }
-
-            return result;
+    public int update(String sql, Object... params) {
+        try (Connection connection = dataSource.getConnection()) {
+           return update(connection, sql, params);
         } catch (SQLException e) {
             log.error(e.getMessage(), e);
             throw new DataAccessException(e);
@@ -77,39 +57,30 @@ public class JdbcTemplate {
                             final RowMapper<T> rowMapper,
                             final Object... params
     ) {
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            setParameters(pstmt, params);
+        return execute(conn -> {
+            try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                setParameters(pstmt, params);
 
-            log.debug("query : {}", sql);
+                log.debug("query : {}", sql);
 
-            List<T> result = new ArrayList<>();
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    result.add(rowMapper.map(rs));
+                List<T> result = new ArrayList<>();
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()) {
+                        result.add(rowMapper.map(rs));
+                    }
                 }
-            }
 
-            return result;
-        } catch (SQLException e) {
-            log.error(e.getMessage(), e);
-            throw new DataAccessException(e);
-        }
+                return result;
+            } catch (SQLException e) {
+                log.error(e.getMessage(), e);
+                throw new DataAccessException(e);
+            }
+        }, connection);
     }
 
-    public <T> T findOne(final String sql, final RowMapper<T> rowMapper, final Object... params) {
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            setParameters(pstmt, params);
-
-            log.debug("query : {}", sql);
-
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return rowMapper.map(rs);
-                }
-            }
-
-            return null;
+    public <T> List<T> find(final String sql, final RowMapper<T> rowMapper, final Object... params) {
+        try (Connection connection = dataSource.getConnection()) {
+            return find(connection, sql, rowMapper, params);
         } catch (SQLException e) {
             log.error(e.getMessage(), e);
             throw new DataAccessException(e);
@@ -121,18 +92,29 @@ public class JdbcTemplate {
                          final RowMapper<T> rowMapper,
                          final Object... params
     ) {
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            setParameters(pstmt, params);
+        return execute(conn -> {
+            try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                setParameters(pstmt, params);
 
-            log.debug("query : {}", sql);
+                log.debug("query : {}", sql);
 
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return rowMapper.map(rs);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        return rowMapper.map(rs);
+                    }
                 }
-            }
 
-            return null;
+                return null;
+            } catch (SQLException e) {
+                log.error(e.getMessage(), e);
+                throw new DataAccessException(e);
+            }
+        }, connection);
+    }
+
+    public <T> T findOne(final String sql, final RowMapper<T> rowMapper, final Object... params) {
+        try (Connection connection = dataSource.getConnection()) {
+            return findOne(connection, sql, rowMapper, params);
         } catch (SQLException e) {
             log.error(e.getMessage(), e);
             throw new DataAccessException(e);
