@@ -5,6 +5,7 @@ import com.techcourse.dao.UserDao;
 import com.techcourse.dao.UserHistoryDao;
 import com.techcourse.domain.User;
 import com.techcourse.domain.UserHistory;
+import java.sql.Connection;
 import java.util.NoSuchElementException;
 import javax.sql.DataSource;
 import org.slf4j.Logger;
@@ -29,13 +30,18 @@ public class UserService {
             .orElseThrow(() -> new NoSuchElementException("id에 해당하는 유저를 찾을 수 없습니다."));
     }
 
+    public User findById(final Connection connection, final long id) {
+        return userDao.findById(connection, id)
+            .orElseThrow(() -> new NoSuchElementException("id에 해당하는 유저를 찾을 수 없습니다."));
+    }
+
     public void insert(final User user) {
         userDao.insert(user);
     }
 
     public void changePassword(final long id, final String newPassword, final String createBy) {
         transactionTemplate.execute(connection -> {
-            final var user = findById(id);
+            final var user = findById(connection, id);
             log.debug("user password change: {}", user.getId());
             user.changePassword(newPassword);
 
