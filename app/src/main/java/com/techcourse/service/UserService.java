@@ -42,7 +42,7 @@ public class UserService {
     public void changePassword(final long id, final String newPassword, final String createBy) {
         transactionTemplate.execute(connection -> {
             final var user = findById(connection, id);
-            log.debug("user password change: {}", user.getId());
+            log.debug("user password change: {}", user);
             user.changePassword(newPassword);
 
             userDao.update(connection, user);
