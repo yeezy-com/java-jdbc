@@ -3,6 +3,7 @@ package com.techcourse.dao;
 import com.interface21.jdbc.core.JdbcTemplate;
 import com.interface21.jdbc.core.NamedJdbcTemplate;
 import com.interface21.jdbc.core.NamedSqlParamMap;
+import com.interface21.jdbc.datasource.DataSourceUtils;
 import com.techcourse.domain.UserHistory;
 import java.sql.Connection;
 import org.slf4j.Logger;
@@ -24,22 +25,7 @@ public class UserHistoryDao {
             values (:user_id, :account, :password, :email, :created_at, :created_by)
             """;
 
-        log.debug("user log insert : {}", userHistory);
-        NamedSqlParamMap params = new NamedSqlParamMap()
-            .addValue("user_id", userHistory.getUserId())
-            .addValue("account", userHistory.getAccount())
-            .addValue("password", userHistory.getPassword())
-            .addValue("email", userHistory.getEmail())
-            .addValue("created_at", userHistory.getCreatedAt())
-            .addValue("created_by", userHistory.getCreateBy());
-        namedJdbcTemplate.update(sql, params);
-    }
-
-    public void log(final Connection connection, final UserHistory userHistory) {
-        final var sql = """
-            insert into user_history (user_id, account, password, email, created_at, created_by) 
-            values (:user_id, :account, :password, :email, :created_at, :created_by)
-            """;
+        Connection connection = DataSourceUtils.getConnection(namedJdbcTemplate.getDataSource());
 
         log.debug("user log insert : {}", userHistory);
         NamedSqlParamMap params = new NamedSqlParamMap()
