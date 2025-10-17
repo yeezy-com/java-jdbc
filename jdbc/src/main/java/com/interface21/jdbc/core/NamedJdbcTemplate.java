@@ -42,8 +42,4 @@ public class NamedJdbcTemplate {
 
         return jdbcTemplate.find(lastSql, rowMapper, params);
     }
-
-    public DataSource getDataSource() {
-        return jdbcTemplate.getDataSource();
-    }
 }
