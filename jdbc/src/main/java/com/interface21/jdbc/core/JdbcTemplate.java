@@ -131,4 +131,8 @@ public class JdbcTemplate {
             pstmt.setObject(idx + 1, params[idx]);
         }
     }
+
+    public DataSource getDataSource() {
+        return dataSource;
+    }
 }

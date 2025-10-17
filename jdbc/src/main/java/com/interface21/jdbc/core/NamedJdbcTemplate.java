@@ -75,4 +75,8 @@ public class NamedJdbcTemplate {
 
         return jdbcTemplate.find(connection, lastSql, rowMapper, params);
     }
+
+    public DataSource getDataSource() {
+        return jdbcTemplate.getDataSource();
+    }
 }
