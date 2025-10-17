@@ -25,8 +25,6 @@ public class UserHistoryDao {
             values (:user_id, :account, :password, :email, :created_at, :created_by)
             """;
 
-        Connection connection = DataSourceUtils.getConnection(namedJdbcTemplate.getDataSource());
-
         log.debug("user log insert : {}", userHistory);
         NamedSqlParamMap params = new NamedSqlParamMap()
             .addValue("user_id", userHistory.getUserId())
@@ -35,6 +33,6 @@ public class UserHistoryDao {
             .addValue("email", userHistory.getEmail())
             .addValue("created_at", userHistory.getCreatedAt())
             .addValue("created_by", userHistory.getCreateBy());
-        namedJdbcTemplate.update(connection, sql, params);
+        namedJdbcTemplate.update(sql, params);
     }
 }

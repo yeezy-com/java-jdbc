@@ -33,8 +33,7 @@ public class UserDao {
         log.debug("insert user: {}", user);
         NamedSqlParamMap params = getSqlParamMapForInsert(user);
 
-        Connection connection = DataSourceUtils.getConnection(namedJdbcTemplate.getDataSource());
-        namedJdbcTemplate.update(connection, sql, params);
+        namedJdbcTemplate.update(sql, params);
     }
 
     private NamedSqlParamMap getSqlParamMapForInsert(User user) {
@@ -51,8 +50,7 @@ public class UserDao {
         log.info("update user: {}", user);
         NamedSqlParamMap params = getSqlParamMapForUpdate(user);
 
-        Connection connection = DataSourceUtils.getConnection(namedJdbcTemplate.getDataSource());
-        namedJdbcTemplate.update(connection, sql, params);
+        namedJdbcTemplate.update(sql, params);
     }
 
     private NamedSqlParamMap getSqlParamMapForUpdate(User user) {
@@ -67,17 +65,14 @@ public class UserDao {
     public List<User> findAll() {
         final var sql = "select id, account, password, email from users";
 
-        Connection connection = DataSourceUtils.getConnection(namedJdbcTemplate.getDataSource());
-        return namedJdbcTemplate.select(connection, sql, userRowMapper());
+        return namedJdbcTemplate.select(sql, userRowMapper());
     }
 
     public Optional<User> findById(final Long id) {
         final var sql = "select id, account, password, email from users where id = :id";
 
-        Connection connection = DataSourceUtils.getConnection(namedJdbcTemplate.getDataSource());
-
         NamedSqlParamMap param = new NamedSqlParamMap("id", id);
-        User user = namedJdbcTemplate.selectForOne(connection, sql, param, userRowMapper());
+        User user = namedJdbcTemplate.selectForOne(sql, param, userRowMapper());
 
         return Optional.ofNullable(user);
     }
@@ -85,10 +80,8 @@ public class UserDao {
     public Optional<User> findByAccount(final String account) {
         final var sql = "select id, account, password, email from users where account = :account";
 
-        Connection connection = DataSourceUtils.getConnection(namedJdbcTemplate.getDataSource());
-
         NamedSqlParamMap param = new NamedSqlParamMap("account", account);
-        User user = namedJdbcTemplate.selectForOne(connection, sql, param, userRowMapper());
+        User user = namedJdbcTemplate.selectForOne(sql, param, userRowMapper());
 
         return Optional.ofNullable(user);
     }
