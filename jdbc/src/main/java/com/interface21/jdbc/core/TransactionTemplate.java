@@ -4,7 +4,7 @@ import com.interface21.dao.DataAccessException;
 import com.interface21.jdbc.datasource.DataSourceUtils;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.function.Function;
+import java.util.function.Supplier;
 import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,12 +19,12 @@ public class TransactionTemplate {
         this.dataSource = dataSource;
     }
 
-    public <T> T execute(Function<Connection, T> executor) {
+    public <T> T execute(Supplier<T> executor) {
         final var conn = DataSourceUtils.getConnection(dataSource);
         try {
             conn.setAutoCommit(false);
 
-            T object = executor.apply(conn);
+            T object = executor.get();
 
             conn.commit();
             return object;
