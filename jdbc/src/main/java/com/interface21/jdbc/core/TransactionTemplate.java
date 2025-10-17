@@ -1,6 +1,7 @@
 package com.interface21.jdbc.core;
 
 import com.interface21.dao.DataAccessException;
+import com.interface21.jdbc.datasource.DataSourceUtils;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.function.Function;
@@ -19,7 +20,7 @@ public class TransactionTemplate {
     }
 
     public <T> T execute(Function<Connection, T> executor) {
-        try (final var conn = dataSource.getConnection()) {
+        try (final var conn = DataSourceUtils.getConnection(dataSource)) {
             try {
                 conn.setAutoCommit(false);
 
