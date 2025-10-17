@@ -20,31 +20,36 @@ public class TransactionTemplate {
     }
 
     public <T> T execute(Function<Connection, T> executor) {
-        try (final var conn = DataSourceUtils.getConnection(dataSource)) {
-            try {
-                conn.setAutoCommit(false);
+        final var conn = DataSourceUtils.getConnection(dataSource);
+        try {
+            conn.setAutoCommit(false);
 
-                T object = executor.apply(conn);
+            T object = executor.apply(conn);
 
-                conn.commit();
-                return object;
-            } catch (DataAccessException | SQLException e) {
-                log.error(e.getMessage(), e);
-                try {
-                    conn.rollback();
-                } catch (SQLException sqlException) {
-                    log.error(e.getMessage(), sqlException);
-                    throw new DataAccessException(sqlException);
-                }
-                throw new DataAccessException(e);
-            } finally {
-                try {
-                    conn.setAutoCommit(true);
-                } catch (SQLException e) {
-                    log.error(e.getMessage(), e);
-                    throw new DataAccessException(e);
-                }
-            }
+            conn.commit();
+            return object;
+        } catch (DataAccessException | SQLException e) {
+            log.error(e.getMessage(), e);
+            rollback(conn);
+            throw new DataAccessException(e);
+        } finally {
+            release(conn);
+        }
+    }
+
+    private void rollback(Connection conn) {
+        try {
+            conn.rollback();
+        } catch (SQLException e) {
+            log.error(e.getMessage(), e);
+            throw new DataAccessException(e);
+        }
+    }
+
+    private void release(Connection conn) {
+        try {
+            conn.setAutoCommit(true);
+            DataSourceUtils.releaseConnection(conn, dataSource);
         } catch (SQLException e) {
             log.error(e.getMessage(), e);
             throw new DataAccessException(e);
