@@ -11,13 +11,17 @@ public abstract class TransactionSynchronizationManager {
     private TransactionSynchronizationManager() {}
 
     public static Connection getResource(DataSource key) {
-        return null;
+        Map<DataSource, Connection> dataSourceConnection = resources.get();
+        return dataSourceConnection.get(key);
     }
 
     public static void bindResource(DataSource key, Connection value) {
+        Map<DataSource, Connection> dataSourceConnection = resources.get();
+        dataSourceConnection.put(key, value);
     }
 
     public static Connection unbindResource(DataSource key) {
-        return null;
+        Map<DataSource, Connection> dataSourceConnection = resources.get();
+        return dataSourceConnection.remove(key);
     }
 }
