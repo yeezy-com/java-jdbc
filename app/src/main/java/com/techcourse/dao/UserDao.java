@@ -52,7 +52,7 @@ public class UserDao {
         NamedSqlParamMap params = getSqlParamMapForUpdate(user);
 
         Connection connection = DataSourceUtils.getConnection(namedJdbcTemplate.getDataSource());
-        namedJdbcTemplate.update(sql, params);
+        namedJdbcTemplate.update(connection, sql, params);
     }
 
     private NamedSqlParamMap getSqlParamMapForUpdate(User user) {
