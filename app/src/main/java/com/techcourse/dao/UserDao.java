@@ -1,12 +1,10 @@
 package com.techcourse.dao;
 
-import com.interface21.jdbc.core.NamedSqlParamMap;
+import com.interface21.jdbc.bind.RowMapper;
 import com.interface21.jdbc.core.JdbcTemplate;
 import com.interface21.jdbc.core.NamedJdbcTemplate;
-import com.interface21.jdbc.bind.RowMapper;
-import com.interface21.jdbc.datasource.DataSourceUtils;
+import com.interface21.jdbc.core.NamedSqlParamMap;
 import com.techcourse.domain.User;
-import java.sql.Connection;
 import java.util.List;
 import java.util.Optional;
 import javax.sql.DataSource;
