@@ -16,12 +16,15 @@ public class TransactionUserService implements UserService {
 
     @Override
     public User findById(final long id) {
-        return userService.findById(id);
+        return transactionTemplate.execute(() -> userService.findById(id));
     }
 
     @Override
     public void save(final User user) {
-        userService.save(user);
+        transactionTemplate.execute(() -> {
+            userService.save(user);
+            return null;
+        });
     }
 
     @Override
