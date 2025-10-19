@@ -1,7 +1,6 @@
 package com.interface21.jdbc.core;
 
 import com.interface21.jdbc.bind.RowMapper;
-import java.sql.Connection;
 import java.util.List;
 import javax.sql.DataSource;
 
