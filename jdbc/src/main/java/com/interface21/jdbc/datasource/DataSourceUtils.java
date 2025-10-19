@@ -11,7 +11,7 @@ public abstract class DataSourceUtils {
 
     private DataSourceUtils() {}
 
-    public static boolean isInit(DataSource dataSource) {
+    public static boolean hasConnectionInThread(DataSource dataSource) {
         Connection connection = TransactionSynchronizationManager.getResource(dataSource);
         return connection == null;
     }
