@@ -12,7 +12,7 @@ public abstract class DataSourceUtils {
 
     public static boolean hasConnectionInThread(DataSource dataSource) {
         Connection connection = TransactionSynchronizationManager.getResource(dataSource);
-        return connection == null;
+        return connection != null;
     }
 
     public static Connection getConnection(DataSource dataSource) throws CannotGetJdbcConnectionException {

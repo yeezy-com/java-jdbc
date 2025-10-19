@@ -27,13 +27,13 @@ public class JdbcTemplate {
     }
 
     private <R> R execute(Function<Connection, R> executor) {
-        boolean isInit = DataSourceUtils.hasConnectionInThread(dataSource);
+        boolean hasConnection = DataSourceUtils.hasConnectionInThread(dataSource);
 
         Connection connection = DataSourceUtils.getConnection(dataSource);
         try {
             return executor.apply(connection);
         } finally {
-            if (isInit) {
+            if (!hasConnection) {
                 DataSourceUtils.releaseConnection(connection, dataSource);
             }
         }
