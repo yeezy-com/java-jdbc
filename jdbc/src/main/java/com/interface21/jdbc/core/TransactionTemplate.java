@@ -49,10 +49,11 @@ public class TransactionTemplate {
     private void release(Connection conn) {
         try {
             conn.setAutoCommit(true);
-            DataSourceUtils.releaseConnection(conn, dataSource);
         } catch (SQLException e) {
             log.error(e.getMessage(), e);
             throw new DataAccessException(e);
+        } finally {
+            DataSourceUtils.releaseConnection(conn, dataSource);
         }
     }
 }
