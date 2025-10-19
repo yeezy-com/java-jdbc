@@ -28,7 +28,7 @@ public class TransactionTemplate {
 
             conn.commit();
             return object;
-        } catch (DataAccessException | SQLException e) {
+        } catch (Exception e) {
             log.error(e.getMessage(), e);
             rollback(conn);
             throw new DataAccessException(e);
